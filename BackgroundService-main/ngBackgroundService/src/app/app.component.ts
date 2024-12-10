@@ -1,7 +1,7 @@
 import { AccountService } from './services/account.service';
 import { Component } from '@angular/core';
 
-// On doit commencer par ajouter signalr dans les node_modules: npm install @microsoft/signalr
+// TODO (DONE): On doit commencer par ajouter signalr dans les node_modules: npm install @microsoft/signalr
 // Ensuite on inclut la librairie
 import * as signalR from "@microsoft/signalr"
 
@@ -25,8 +25,10 @@ export class AppComponent {
 
   baseUrl = "https://localhost:7056/";
 
-  // Ajouter une variable nbWins
+  // TODO (DONE): Ajouter une variable nbWins
+  nbWins = 0;
 
+  // Connexion SignalR
   private hubConnection?: signalR.HubConnection
 
   isConnected = false;
@@ -39,6 +41,7 @@ export class AppComponent {
   Increment() {
     //TODO: Augmenter le nbClicks par la valeur du multiplicateur
     this.nbClicks += 1;
+    // Envoie la requête au serveur via SignalR pour effectuer l'incrément
     this.hubConnection!.invoke('Increment')
   }
 
@@ -73,27 +76,36 @@ export class AppComponent {
     return this.account.isLoggedIn();
   }
 
+  // Méthode pour établir une connexion avec le Hub SignalR
   connectToHub() {
+    // Création d'une nouvelle connexion SignalR avec l'URL du serveur et le token d'accès
     this.hubConnection = new signalR.HubConnectionBuilder()
                               .withUrl(this.baseUrl + 'game', { accessTokenFactory: () => sessionStorage.getItem("token")! })
                               .build();
 
+    // Vérification de la connexion SignalR                          
     if(!this.hubConnection)
     {
       console.log("Impossible de créer un HubConnection???");
       return;
     }
 
+    // Gestion de l'événement 'GameInfo' envoyé par le serveur via SignalR
     this.hubConnection.on('GameInfo', (data:GameInfo) => {
       this.isConnected = true;
-      // TODO: Mettre à jour les variables pour le coût du multiplier et le nbWins
+      // TODO (nbWins DONE): Mettre à jour les variables pour le coût du multiplier et le nbWins
+      this.nbWins = data.nbWins;
     });
 
     this.hubConnection.on('EndRound', (data:RoundResult) => {
       this.nbClicks = 0;
+      // Mise à jour du nombre de victoires et du coût du multiplicateur en fonction des données envoyées par le serveur
+
       // TODO: Reset du multiplierCost et le multiplier
 
-      // TODO: Si le joueur a gagné, on augmene nbWins
+      // TODO (DONE): Si le joueur a gagné, on augmene nbWins 
+      if(data.winners.indexOf(this.account.username) >= 0)
+        this.nbWins++;
 
       if(data.nbClicks > 0){
         let phrase = " a gagné avec ";
@@ -106,6 +118,7 @@ export class AppComponent {
       }
     });
 
+    // Démarre la connexion au Hub SignalR
     this.hubConnection
       .start()
       .then(() => {
