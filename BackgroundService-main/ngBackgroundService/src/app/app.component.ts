@@ -33,20 +33,30 @@ export class AppComponent {
 
   isConnected = false;
   nbClicks = 0;
-  // TODO: Ajouter 3 variables: Le multiplier, le multiplierCost, mais également le multiplierIntialCost pour remettre à jour multiplierCost après chaque fin de round (ou sinon on peut passer l'information dans l'appel qui vient du Hub!)
+  // TODO (DONE): Ajouter 3 variables: Le multiplier, le multiplierCost, mais également le multiplierIntialCost pour remettre à jour multiplierCost après chaque fin de round (ou sinon on peut passer l'information dans l'appel qui vient du Hub!)
+  multiplier = 1;
+  multiplierCost = 0;
+  mutliplierInitialCost = 0;
 
   constructor(public account:AccountService){
   }
 
   Increment() {
-    //TODO: Augmenter le nbClicks par la valeur du multiplicateur
-    this.nbClicks += 1;
+    //TODO (DONE): Augmenter le nbClicks par la valeur du multiplicateur
+    this.nbClicks += this.multiplier;
     // Envoie la requête au serveur via SignalR pour effectuer l'incrément
     this.hubConnection!.invoke('Increment')
   }
 
   BuyMultiplier() {
-    // TODO: Implémenter la méthode qui permet d'acheter un niveau de multiplier (Appel au Hub!)
+    // TODO (DONE): Implémenter la méthode qui permet d'acheter un niveau de multiplier (Appel au Hub!)
+    if(this.nbClicks >= this.multiplierCost){
+      this.hubConnection!.invoke('BuyMultiplier')
+      this.nbClicks -= this.multiplierCost;
+      this.multiplierCost *= 2;
+      this.multiplier *= 2;
+    }
+
   }
 
   async register(){
@@ -93,7 +103,9 @@ export class AppComponent {
     // Gestion de l'événement 'GameInfo' envoyé par le serveur via SignalR
     this.hubConnection.on('GameInfo', (data:GameInfo) => {
       this.isConnected = true;
-      // TODO (nbWins DONE): Mettre à jour les variables pour le coût du multiplier et le nbWins
+      // TODO (DONE): Mettre à jour les variables pour le coût du multiplier et le nbWins
+      this.mutliplierInitialCost = data.multiplierCost;
+      this.multiplierCost = this.mutliplierInitialCost;
       this.nbWins = data.nbWins;
     });
 
@@ -101,7 +113,9 @@ export class AppComponent {
       this.nbClicks = 0;
       // Mise à jour du nombre de victoires et du coût du multiplicateur en fonction des données envoyées par le serveur
 
-      // TODO: Reset du multiplierCost et le multiplier
+      // TODO (DONE): Reset du multiplierCost et le multiplier
+      this.multiplierCost = this.mutliplierInitialCost;
+      this.multiplier = 1;
 
       // TODO (DONE): Si le joueur a gagné, on augmene nbWins 
       if(data.winners.indexOf(this.account.username) >= 0)

@@ -31,8 +31,9 @@ namespace BackgroundService.Hubs
             // Envoi d'informations au client (Angular) via SignalR.
             await Clients.Caller.SendAsync("GameInfo", new GameInfoDTO()
             {
-                // TODO (nbWins DONE): Remplir l'information avec les 2 nouveaux features (nbWins et multiplierCost)
-                nbWins = player.NbWins
+                // TODO (DONE): Remplir l'information avec les 2 nouveaux features (nbWins et multiplierCost)
+                nbWins = player.NbWins,
+                multiplierCost = Game.MULTIPLIER_BASE_PRICE
 
             });
         }
